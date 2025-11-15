@@ -163,26 +163,32 @@ def calculate_alert_diff(level, val, bd1, bd2, bd3, hist):
         return None
 
 def parse_river_dt(lbl, year):
-    """
-    VNDMS labels are already GMT+7.
-    Example: '7h00/12' => 07:00, day=12, current month/year.
-    """
-    try:
-        clean = lbl.strip().replace("\n", "")
-        m = re.match(r"(\d{1,2})h(\d{1,2})/(\d{1,2})", clean)
-        if m:
-            hour = int(m.group(1))
-            minute = int(m.group(2))
-            day = int(m.group(3))
-            now_local = datetime.now(TZ_LOCAL)
-            month = now_local.month
-            dt = datetime(year, month, day, hour, minute)
-            if TZ_LOCAL:
-                return dt.replace(tzinfo=TZ_LOCAL)
-            return dt
-    except:
-        pass
-    return None
+    if not lbl:
+            return None
+    
+        clean = lbl.strip()
+
+        m_new = re.search(r"(\d{1,2})h\s+(\d{1,2})/(\d{1,2})", clean)
+        if m_new:
+            try:
+                hour = int(m_new.group(1))
+                minute = 0  # New format implies top of the hour
+                day = int(m_new.group(2))
+                month = int(m_new.group(3))
+                
+                # Handle Year Boundary (e.g., Parsing Dec data in Jan)
+                # If data month is 12 and we are in Jan, use previous year
+                now = datetime.now(TZ_LOCAL)
+                year_to_use = current_year
+                if month == 12 and now.month == 1:
+                    year_to_use -= 1
+                
+                dt = datetime(year_to_use, month, day, hour, minute)
+                if TZ_LOCAL:
+                    return dt.replace(tzinfo=TZ_LOCAL)
+                return dt
+            except ValueError:
+                pass # Invalid date components
 
 def ms_to_dt_local(ms_str):
     """
