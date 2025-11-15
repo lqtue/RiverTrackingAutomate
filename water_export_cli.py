@@ -50,27 +50,27 @@ RIVER_HEADERS = {
     "Origin": "https://vndms.dmptc.gov.vn",
 }
 
-# ---- Lakes: ID + recoded basin ----
+# ---- Lakes: ID + recoded basin + recoded province ----
 LAKE_CONFIG = {
-    "467D6521-FEAE-40F3-BC73-8E4B0B1F598F": {"name": "Pleikrông",       "basin_recode": "Sê San"},
-    "53e42d94-1faa-4029-93f0-739f8f5da487": {"name": "SeSan4",          "basin_recode": "Sê San"},
-    "A11984FB-8CAD-44D7-BF9E-A0E881483E47": {"name": "Hương Điền",      "basin_recode": "Hương - Bồ"},
-    "EE42CA6E-E5FC-4A9F-B90C-040211672E1B": {"name": "Sông Tranh 2",    "basin_recode": "Vu Gia - Thu Bồn"},
-    "545B2C88-D719-42F1-8663-A1E796F44C14": {"name": "Ialy",            "basin_recode": "Sê San"},
-    "A72755CC-49FE-44AF-827D-7010EB7EBCB4": {"name": "Sông Bung 4",     "basin_recode": "Vu Gia - Thu Bồn"},
-    "1D320527-2DC9-4C79-A00B-EBB16D44F735": {"name": "Bình Điền",       "basin_recode": "Hương - Bồ"},
-    "fd622826-9f2e-4130-8995-1654bac81895": {"name": "Tả Trạch",        "basin_recode": "Hương - Bồ"},
-    "D0C28BB9-FE47-4BC2-B0DB-445038C1D1C5": {"name": "Sông Hinh",       "basin_recode": "Ba"},
-    "7D5B7DB0-D64A-4A36-BD4E-54A95CA62E9D": {"name": "Sông Ba Hạ",      "basin_recode": "Ba"},
-    "72659CC3-2BB5-4E34-810E-96722BCE0F54": {"name": "A Vương",         "basin_recode": "Vu Gia - Thu Bồn"},
-    "4AB3F3C8-D7F4-44AA-897C-E93BDCFA1DCC": {"name": "Kanak",           "basin_recode": "Ba"},
-    "929f34bb-4d88-4364-8882-4099e75bcfd5": {"name": "Nước Trong",      "basin_recode": "Trà Khúc"},
-    "9CBE33CD-5CFB-4CB9-BAEB-59147A825DF0": {"name": "Ayun Hạ",         "basin_recode": "Ba"},
-    "c9a8c4ca-f1bb-467f-82c4-0999294af8fc": {"name": "Định Bình",       "basin_recode": "Kôn - Hà Thanh"},
-    "4006E5A9-4E5A-4A46-AC19-35F1233E6B4A": {"name": "Thượng Kon Tum", "basin_recode": "Sê San"},
-    "73bb8be6-bbd6-4042-8360-30abdced336a": {"name": "Ia MLá",          "basin_recode": "Ba"},
-    "9BFF6E76-94E2-4233-B659-258D74A1295F": {"name": "Trà Xom",         "basin_recode": "Kôn - Hà Thanh"},
-    "062A7CF0-46F3-4E99-8BCD-040CEF304344": {"name": "Thuận Ninh",      "basin_recode": "Kôn - Hà Thanh"},
+    "467D6521-FEAE-40F3-BC73-8E4B0B1F598F": {"name": "Pleikrông",       "basin_recode": "Sê San",           "province_recode": "Quảng Ngãi"},
+    "53e42d94-1faa-4029-93f0-739f8f5da487": {"name": "SeSan4",          "basin_recode": "Sê San",           "province_recode": "Gia Lai"},
+    "A11984FB-8CAD-44D7-BF9E-A0E881483E47": {"name": "Hương Điền",      "basin_recode": "Hương - Bồ",       "province_recode": "TP. Huế"},
+    "EE42CA6E-E5FC-4A9F-B90C-040211672E1B": {"name": "Sông Tranh 2",    "basin_recode": "Vu Gia - Thu Bồn", "province_recode": "TP. Đà Nẵng"},
+    "545B2C88-D719-42F1-8663-A1E796F44C14": {"name": "Ialy",            "basin_recode": "Sê San",           "province_recode": "Quảng Ngãi"},
+    "A72755CC-49FE-44AF-827D-7010EB7EBCB4": {"name": "Sông Bung 4",     "basin_recode": "Vu Gia - Thu Bồn", "province_recode": "TP. Đà Nẵng"},
+    "1D320527-2DC9-4C79-A00B-EBB16D44F735": {"name": "Bình Điền",       "basin_recode": "Hương - Bồ",       "province_recode": "TP. Huế"},
+    "fd622826-9f2e-4130-8995-1654bac81895": {"name": "Tả Trạch",        "basin_recode": "Hương - Bồ",       "province_recode": "TP. Huế"},
+    "D0C28BB9-FE47-4BC2-B0DB-445038C1D1C5": {"name": "Sông Hinh",       "basin_recode": "Ba",               "province_recode": "Đắk Lắk"},
+    "7D5B7DB0-D64A-4A36-BD4E-54A95CA62E9D": {"name": "Sông Ba Hạ",      "basin_recode": "Ba",               "province_recode": "Đắk Lắk"},
+    "72659CC3-2BB5-4E34-810E-96722BCE0F54": {"name": "A Vương",         "basin_recode": "Vu Gia - Thu Bồn", "province_recode": "TP. Đà Nẵng"},
+    "4AB3F3C8-D7F4-44AA-897C-E93BDCFA1DCC": {"name": "Kanak",           "basin_recode": "Ba",               "province_recode": "Gia Lai"},
+    "929f34bb-4d88-4364-8882-4099e75bcfd5": {"name": "Nước Trong",      "basin_recode": "Trà Khúc",         "province_recode": "Quảng Ngãi"},
+    "9CBE33CD-5CFB-4CB9-BAEB-59147A825DF0": {"name": "Ayun Hạ",         "basin_recode": "Ba",               "province_recode": "Gia Lai"},
+    "c9a8c4ca-f1bb-467f-82c4-0999294af8fc": {"name": "Định Bình",       "basin_recode": "Kôn - Hà Thanh",   "province_recode": "Gia Lai"},
+    "4006E5A9-4E5A-4A46-AC19-35F1233E6B4A": {"name": "Thượng Kon Tum",  "basin_recode": "Sê San",           "province_recode": "Quảng Ngãi"},
+    "73bb8be6-bbd6-4042-8360-30abdced336a": {"name": "Ia MLá",          "basin_recode": "Ba",               "province_recode": "Gia Lai"},
+    "9BFF6E76-94E2-4233-B659-258D74A1295F": {"name": "Trà Xom",         "basin_recode": "Kôn - Hà Thanh",   "province_recode": "Gia Lai"},
+    "062A7CF0-46F3-4E99-8BCD-040CEF304344": {"name": "Thuận Ninh",      "basin_recode": "Kôn - Hà Thanh",   "province_recode": "Gia Lai"},
 }
 LAKE_IDS = set(LAKE_CONFIG.keys())
 
@@ -80,7 +80,7 @@ STATION_CONFIG = {
     "69704": {"name": "Kon Plông", "basin_recode": "Sê San"},
     "71518": {"name": "Phú Ốc",    "basin_recode": "Hương - Bồ"},
     "71520": {"name": "Kim Long",  "basin_recode": "Hương - Bồ"},
-    "71521": {"name": "Cẩm Lệ",    "basin_recode": "Vu Gia - Thu Bồn"}, # Added based on your logs
+    "71521": {"name": "Cẩm Lệ",    "basin_recode": "Vu Gia - Thu Bồn"},
     "71527": {"name": "Ái Nghĩa",  "basin_recode": "Vu Gia - Thu Bồn"},
     "71533": {"name": "Hội Khách", "basin_recode": "Vu Gia - Thu Bồn"},
     "71540": {"name": "Trà Khúc",  "basin_recode": "Trà Khúc"},
@@ -417,6 +417,8 @@ def main():
         conf = LAKE_CONFIG[lc]
         recoded_basin = conf["basin_recode"]
         recoded_name = conf["name"]
+        # Use recoded province if available, otherwise fall back to API province
+        recoded_province = conf.get("province_recode", rec.get("ProvinceName"))
 
         dt_local = ms_to_dt_local(rec.get("ThoiGianCapNhat"))
 
@@ -429,7 +431,7 @@ def main():
                 "id": lc,
                 "name": recoded_name,
                 "basin": recoded_basin,
-                "province": rec.get("ProvinceName"),
+                "province": recoded_province,
                 "timestamp_utc": dt_local.strftime("%Y-%m-%d %H:%M") if dt_local else None,
                 "water_level_m": rec.get("TdMucNuoc"),
                 "alert_status": rec.get("XuThe", "N/A"),
