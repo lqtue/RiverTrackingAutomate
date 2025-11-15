@@ -2,8 +2,12 @@ name: Water Data Export
 
 on:
   schedule:
-    - cron: "0 * * * *"   # runs every hour at minute 00 (UTC)
-  workflow_dispatch:       # allow manual run
+    - cron: "0 * * * *"   # chạy mỗi giờ, phút 00 UTC
+  workflow_dispatch:       # cho phép chạy tay
+
+# 👇 Thêm đoạn này
+permissions:
+  contents: write
 
 jobs:
   export-water-data:
