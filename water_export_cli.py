@@ -28,7 +28,7 @@ if OUT_CSV.exists():
         if pd.isna(last_dt):
             raise ValueError("No valid timestamp in existing CSV")
         last_date = last_dt.date()
-        # tránh trường hợp clock lệch
+        # Avoid clock drift issues
         if last_date > DEFAULT_END_DATE:
             DEFAULT_START_DATE = DEFAULT_END_DATE - timedelta(days=6)
         else:
@@ -38,7 +38,7 @@ if OUT_CSV.exists():
         print(f"⚠️ Could not infer start date from existing CSV, fallback to 7 days. Reason: {e}")
         DEFAULT_START_DATE = DEFAULT_END_DATE - timedelta(days=6)
 else:
-    # first run: 7 days history
+    # First run: 7 days history
     DEFAULT_START_DATE = DEFAULT_END_DATE - timedelta(days=6)
     print(f"🆕 No existing CSV. Fetching 7 days from {DEFAULT_START_DATE} to {DEFAULT_END_DATE} (GMT+7).")
 
@@ -52,42 +52,43 @@ RIVER_HEADERS = {
 
 # ---- Lakes: ID + recoded basin ----
 LAKE_CONFIG = {
-    "467D6521-FEAE-40F3-BC73-8E4B0B1F598F": {"name": "Pleikrông",      "basin_recode": "Sê San"},
-    "53e42d94-1faa-4029-93f0-739f8f5da487": {"name": "SeSan4",         "basin_recode": "Sê San"},
-    "A11984FB-8CAD-44D7-BF9E-A0E881483E47": {"name": "Hương Điền",     "basin_recode": "Hương - Bồ"},
-    "EE42CA6E-E5FC-4A9F-B90C-040211672E1B": {"name": "Sông Tranh 2",   "basin_recode": "Vu Gia - Thu Bồn"},
-    "545B2C88-D719-42F1-8663-A1E796F44C14": {"name": "Ialy",           "basin_recode": "Sê San"},
-    "A72755CC-49FE-44AF-827D-7010EB7EBCB4": {"name": "Sông Bung 4",    "basin_recode": "Vu Gia - Thu Bồn"},
-    "1D320527-2DC9-4C79-A00B-EBB16D44F735": {"name": "Bình Điền",      "basin_recode": "Hương - Bồ"},
-    "fd622826-9f2e-4130-8995-1654bac81895": {"name": "Tả Trạch",       "basin_recode": "Hương - Bồ"},
-    "D0C28BB9-FE47-4BC2-B0DB-445038C1D1C5": {"name": "Sông Hinh",      "basin_recode": "Ba"},
-    "7D5B7DB0-D64A-4A36-BD4E-54A95CA62E9D": {"name": "Sông Ba Hạ",     "basin_recode": "Ba"},
-    "72659CC3-2BB5-4E34-810E-96722BCE0F54": {"name": "A Vương",        "basin_recode": "Vu Gia - Thu Bồn"},
-    "4AB3F3C8-D7F4-44AA-897C-E93BDCFA1DCC": {"name": "Kanak",          "basin_recode": "Ba"},
-    "929f34bb-4d88-4364-8882-4099e75bcfd5": {"name": "Nước Trong",     "basin_recode": "Trà Khúc"},
-    "9CBE33CD-5CFB-4CB9-BAEB-59147A825DF0": {"name": "Ayun Hạ",        "basin_recode": "Ba"},
-    "c9a8c4ca-f1bb-467f-82c4-0999294af8fc": {"name": "Định Bình",      "basin_recode": "Kôn - Hà Thanh"},
+    "467D6521-FEAE-40F3-BC73-8E4B0B1F598F": {"name": "Pleikrông",       "basin_recode": "Sê San"},
+    "53e42d94-1faa-4029-93f0-739f8f5da487": {"name": "SeSan4",          "basin_recode": "Sê San"},
+    "A11984FB-8CAD-44D7-BF9E-A0E881483E47": {"name": "Hương Điền",      "basin_recode": "Hương - Bồ"},
+    "EE42CA6E-E5FC-4A9F-B90C-040211672E1B": {"name": "Sông Tranh 2",    "basin_recode": "Vu Gia - Thu Bồn"},
+    "545B2C88-D719-42F1-8663-A1E796F44C14": {"name": "Ialy",            "basin_recode": "Sê San"},
+    "A72755CC-49FE-44AF-827D-7010EB7EBCB4": {"name": "Sông Bung 4",     "basin_recode": "Vu Gia - Thu Bồn"},
+    "1D320527-2DC9-4C79-A00B-EBB16D44F735": {"name": "Bình Điền",       "basin_recode": "Hương - Bồ"},
+    "fd622826-9f2e-4130-8995-1654bac81895": {"name": "Tả Trạch",        "basin_recode": "Hương - Bồ"},
+    "D0C28BB9-FE47-4BC2-B0DB-445038C1D1C5": {"name": "Sông Hinh",       "basin_recode": "Ba"},
+    "7D5B7DB0-D64A-4A36-BD4E-54A95CA62E9D": {"name": "Sông Ba Hạ",      "basin_recode": "Ba"},
+    "72659CC3-2BB5-4E34-810E-96722BCE0F54": {"name": "A Vương",         "basin_recode": "Vu Gia - Thu Bồn"},
+    "4AB3F3C8-D7F4-44AA-897C-E93BDCFA1DCC": {"name": "Kanak",           "basin_recode": "Ba"},
+    "929f34bb-4d88-4364-8882-4099e75bcfd5": {"name": "Nước Trong",      "basin_recode": "Trà Khúc"},
+    "9CBE33CD-5CFB-4CB9-BAEB-59147A825DF0": {"name": "Ayun Hạ",         "basin_recode": "Ba"},
+    "c9a8c4ca-f1bb-467f-82c4-0999294af8fc": {"name": "Định Bình",       "basin_recode": "Kôn - Hà Thanh"},
     "4006E5A9-4E5A-4A46-AC19-35F1233E6B4A": {"name": "Thượng Kon Tum", "basin_recode": "Sê San"},
-    "73bb8be6-bbd6-4042-8360-30abdced336a": {"name": "Ia MLá",         "basin_recode": "Ba"},
-    "9BFF6E76-94E2-4233-B659-258D74A1295F": {"name": "Trà Xom",        "basin_recode": "Kôn - Hà Thanh"},
-    "062A7CF0-46F3-4E99-8BCD-040CEF304344": {"name": "Thuận Ninh",     "basin_recode": "Kôn - Hà Thanh"},
+    "73bb8be6-bbd6-4042-8360-30abdced336a": {"name": "Ia MLá",          "basin_recode": "Ba"},
+    "9BFF6E76-94E2-4233-B659-258D74A1295F": {"name": "Trà Xom",         "basin_recode": "Kôn - Hà Thanh"},
+    "062A7CF0-46F3-4E99-8BCD-040CEF304344": {"name": "Thuận Ninh",      "basin_recode": "Kôn - Hà Thanh"},
 }
 LAKE_IDS = set(LAKE_CONFIG.keys())
 
-# ---- Stations: ID + recoded basin ONLY (no river/province recode) ----
+# ---- Stations: ID + recoded basin ONLY ----
 STATION_CONFIG = {
     "69702": {"name": "Kon Tum",   "basin_recode": "Sê San"},
     "69704": {"name": "Kon Plông", "basin_recode": "Sê San"},
     "71518": {"name": "Phú Ốc",    "basin_recode": "Hương - Bồ"},
     "71520": {"name": "Kim Long",  "basin_recode": "Hương - Bồ"},
+    "71521": {"name": "Cẩm Lệ",    "basin_recode": "Vu Gia - Thu Bồn"}, # Added based on your logs
     "71527": {"name": "Ái Nghĩa",  "basin_recode": "Vu Gia - Thu Bồn"},
     "71533": {"name": "Hội Khách", "basin_recode": "Vu Gia - Thu Bồn"},
     "71540": {"name": "Trà Khúc",  "basin_recode": "Trà Khúc"},
     "71549": {"name": "Bình Nghi", "basin_recode": "Kôn - Hà Thanh"},
     "71558": {"name": "Củng Sơn",  "basin_recode": "Ba"},
-    "71559": {"name": "Phú Lâm",   "basin_recode": "Ba"},
-    "71708": {"name": "An Khê",    "basin_recode": "Ba"},
-    "71709": {"name": "AyunPa",    "basin_recode": "Ba"},
+    "71559": {"name": "Phú Lâm",    "basin_recode": "Ba"},
+    "71708": {"name": "An Khê",     "basin_recode": "Ba"},
+    "71709": {"name": "AyunPa",     "basin_recode": "Ba"},
 }
 STATION_IDS = set(STATION_CONFIG.keys())
 
@@ -162,39 +163,60 @@ def calculate_alert_diff(level, val, bd1, bd2, bd3, hist):
     except:
         return None
 
-def parse_river_dt(lbl, year):
+def parse_river_dt(lbl, current_year):
+    """
+    Parses VNDMS time labels. 
+    Fixes the issue where label is '0h \n15/11' (Hour / Day / Month).
+    """
     if not lbl:
-            return None
-    
-        clean = lbl.strip()
+        return None
 
-        m_new = re.search(r"(\d{1,2})h\s+(\d{1,2})/(\d{1,2})", clean)
-        if m_new:
-            try:
-                hour = int(m_new.group(1))
-                minute = 0  # New format implies top of the hour
-                day = int(m_new.group(2))
-                month = int(m_new.group(3))
-                
-                # Handle Year Boundary (e.g., Parsing Dec data in Jan)
-                # If data month is 12 and we are in Jan, use previous year
-                now = datetime.now(TZ_LOCAL)
-                year_to_use = current_year
-                if month == 12 and now.month == 1:
-                    year_to_use -= 1
-                
-                dt = datetime(year_to_use, month, day, hour, minute)
-                if TZ_LOCAL:
-                    return dt.replace(tzinfo=TZ_LOCAL)
-                return dt
-            except ValueError:
-                pass # Invalid date components
+    clean = lbl.strip()
+
+    # --- Case A: New Format (e.g., "0h \n15/11" -> Hour, Day, Month) ---
+    # \s+ handles the newline char found in your JSON
+    m_new = re.search(r"(\d{1,2})h\s+(\d{1,2})/(\d{1,2})", clean)
+    if m_new:
+        try:
+            hour = int(m_new.group(1))
+            minute = 0  # Format implies top of hour
+            day = int(m_new.group(2))
+            month = int(m_new.group(3))
+            
+            # Handle Year Boundary (e.g. Parsing Dec data in Jan)
+            now = datetime.now(TZ_LOCAL)
+            year_to_use = current_year
+            if month == 12 and now.month == 1:
+                year_to_use -= 1
+            
+            dt = datetime(year_to_use, month, day, hour, minute)
+            if TZ_LOCAL:
+                return dt.replace(tzinfo=TZ_LOCAL)
+            return dt
+        except ValueError:
+            pass 
+
+    # --- Case B: Old Format Fallback (e.g., "7h30/12" -> Hour, Minute, Day) ---
+    m_old = re.search(r"(\d{1,2})h(\d{1,2})/(\d{1,2})", clean)
+    if m_old:
+        try:
+            hour = int(m_old.group(1))
+            minute = int(m_old.group(2))
+            day = int(m_old.group(3))
+            
+            now_local = datetime.now(TZ_LOCAL)
+            month = now_local.month
+            
+            dt = datetime(current_year, month, day, hour, minute)
+            if TZ_LOCAL:
+                return dt.replace(tzinfo=TZ_LOCAL)
+            return dt
+        except ValueError:
+            pass
+
+    return None
 
 def ms_to_dt_local(ms_str):
-    """
-    Thuyloivietnam returns epoch milliseconds (UTC).
-    Convert UTC -> GMT+7.
-    """
     try:
         ms = int(re.search(r"\d+", str(ms_str)).group())
         ts = ms / 1000.0
@@ -210,9 +232,6 @@ def ms_to_dt_local(ms_str):
 # =========================
 
 def scrape_river_stations_list():
-    """
-    Fetch all stations from vndms, keep only IDs in STATION_IDS.
-    """
     url = "https://vndms.dmptc.gov.vn/water_level"
     session = get_robust_session()
     session.headers.update(RIVER_HEADERS)
@@ -230,6 +249,8 @@ def scrape_river_stations_list():
                 sid = m_id.group(1) if m_id else None
                 if not sid:
                     continue
+                
+                # Allow user to add new stations dynamically if found in CONFIG
                 if sid not in STATION_IDS:
                     continue
 
@@ -257,10 +278,6 @@ def scrape_river_stations_list():
     return stations
 
 def scan_lakes_via_api():
-    """
-    Scan thuyloivietnam API from DEFAULT_START_DATE to DEFAULT_END_DATE,
-    keep only lakes with IDs in LAKE_IDS.
-    """
     url = "http://e15.thuyloivietnam.vn/CanhBaoSoLieu/ATCBDTHo"
     session = get_robust_session()
     headers = {
@@ -313,7 +330,7 @@ def main():
         try:
             payload = {
                 "id": sid,
-                "timeSelect": "7",  # API trả 7 ngày; mình lọc lại bằng DEFAULT_START_DATE
+                "timeSelect": "7",
                 "source": "Water",
                 "fromDate": "",
                 "toDate": "",
@@ -348,10 +365,12 @@ def main():
                 "basin_recode", d.get("river_name", meta["river"])
             )
             recoded_name = config.get("name", d.get("name_vn", meta["name"]))
-            province = d.get("province_name", "")  # không recode, lấy từ API
+            province = d.get("province_name", "")
 
             for i in range(min(len(labels), len(values))):
+                # USE THE NEW PARSER HERE
                 dt_local = parse_river_dt(labels[i], curr_year)
+                
                 if not dt_local:
                     continue
                 if dt_local.date() < DEFAULT_START_DATE:
@@ -371,7 +390,7 @@ def main():
                         "name": recoded_name,
                         "basin": recoded_basin,
                         "province": province,
-                        "timestamp_utc": dt_local.strftime("%Y-%m-%d %H:%M"),  # GMT+7
+                        "timestamp_utc": dt_local.strftime("%Y-%m-%d %H:%M"),
                         "water_level_m": val,
                         "alert_status": alert_name,
                         "alert_value": alert_val,
@@ -401,7 +420,6 @@ def main():
 
         dt_local = ms_to_dt_local(rec.get("ThoiGianCapNhat"))
 
-        # lọc theo DEFAULT_START_DATE giống river
         if dt_local and dt_local.date() < DEFAULT_START_DATE:
             continue
 
@@ -444,7 +462,6 @@ def main():
             "name": "Trạm/Hồ",
             "basin": "Tên sông/Lưu vực",
             "province": "Tên tỉnh",
-            # Stored as GMT+7, keep name for compatibility
             "timestamp_utc": "Thời gian (UTC)",
             "water_level_m": "Mực nước (m)",
             "alert_status": "Cảnh báo/Xu thế",
