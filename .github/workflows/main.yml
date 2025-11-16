@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  export-water-data:
+  export-all-data:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,69 +30,90 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 1. Run your existing script
-      - name: Run water export script
-        run: |
-          python water_export_cli.py
+      # 1. Run Water Tracker
+      - name: Run Water Tracker
+        run: python water_export_cli.py
 
-      # 2. Detect changes and build HTML Table
+      # 2. Run Landslide Tracker (NEW)
+      - name: Run Landslide Tracker
+        run: python landslide_export_cli.py
+
+      # 3. Generate HTML Summary (UPDATED for both)
       - name: Generate HTML Summary
         id: summary
         run: |
           HTML_FILE="email_summary.html"
+          HAS_CHANGES="false"
           
-          echo "<h3>🌊 New Data Detected</h3>" > $HTML_FILE
-          echo "<table border='1' cellpadding='5' cellspacing='0'>" >> $HTML_FILE
-          echo "<tr><th>Station</th><th>Basin</th><th>Province</th><th>Time (UTC)</th><th>Level (m)</th><th>Alert</th></tr>" >> $HTML_FILE
+          echo "<h3>🌊⛰️ Data Update Report</h3>" > $HTML_FILE
           
+          # --- CHECK WATER DATA ---
           if git diff --quiet data/water_data_full_combined.csv; then
-            echo "<tr><td colspan='6'>No new data fetched in this run.</td></tr>" >> $HTML_FILE
-            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+             echo "<p>No new water data.</p>" >> $HTML_FILE
           else
-            # Get the diff, strip the '+', and wrap columns in table tags
-            git diff -U0 data/water_data_full_combined.csv \
-              | grep "^+[^+]" \
-              | sed 's/^+//' \
-              | cut -d, -f3,4,5,6,7,8 \
-              | awk -F, '{print "<tr><td>" $1 "</td><td>" $2 "</td><td>" $3 "</td><td>" $4 "</td><td>" $5 "</td><td>" $6 "</td></tr>"}' \
-              >> $HTML_FILE
-            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+             echo "<h4>💧 Water Levels</h4>" >> $HTML_FILE
+             echo "<table border='1' cellpadding='3' cellspacing='0' width='100%'>" >> $HTML_FILE
+             echo "<tr style='background:#f0f0f0'><th>Station</th><th>Time</th><th>Level</th><th>Alert</th></tr>" >> $HTML_FILE
+             # Extract specific columns: Name(3), Time(6), Level(7), Alert(8)
+             git diff -U0 data/water_data_full_combined.csv \
+               | grep "^+[^+]" | sed 's/^+//' \
+               | cut -d, -f3,6,7,8 \
+               | awk -F, '{print "<tr><td>" $1 "</td><td>" $2 "</td><td>" $3 "</td><td>" $4 "</td></tr>"}' \
+               >> $HTML_FILE
+             echo "</table>" >> $HTML_FILE
+             HAS_CHANGES="true"
           fi
-          
-          echo "</table>" >> $HTML_FILE
 
-      # 3. Create Pull Request
+          # --- CHECK LANDSLIDE DATA ---
+          # If file doesn't exist yet, don't diff
+          if [ ! -f data/landslide.csv ]; then
+             echo "<p>Landslide data initializing...</p>" >> $HTML_FILE
+          elif git diff --quiet data/landslide.csv; then
+             echo "<p>No new landslide warnings.</p>" >> $HTML_FILE
+          else
+             echo "<h4>⛰️ Landslide Warnings</h4>" >> $HTML_FILE
+             echo "<table border='1' cellpadding='3' cellspacing='0' width='100%'>" >> $HTML_FILE
+             echo "<tr style='background:#f0f0f0'><th>Time</th><th>Province</th><th>Commune</th><th>Risk</th></tr>" >> $HTML_FILE
+             # CSV Cols: time(1), id, commune(3), province(4), satlo(5), luquet
+             git diff -U0 data/landslide.csv \
+               | grep "^+[^+]" | sed 's/^+//' \
+               | awk -F, '{print "<tr><td>" $1 "</td><td>" $4 "</td><td>" $3 "</td><td>" $5 "</td></tr>"}' \
+               >> $HTML_FILE
+             echo "</table>" >> $HTML_FILE
+             HAS_CHANGES="true"
+          fi
+
+          echo "HAS_CHANGES=$HAS_CHANGES" >> $GITHUB_OUTPUT
+
+      # 4. Create Pull Request (Includes both files)
       - name: Create Pull Request
         if: steps.summary.outputs.HAS_CHANGES == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Auto: Update water data CSV"
-          title: "🌊 Water Data Update: ${{ steps.date.outputs.date }}"
+          commit-message: "Auto: Update Water & Landslide Data"
+          title: "🌊⛰️ Data Update: ${{ steps.date.outputs.date }}"
           body: |
-            New water data has been fetched.
-            **Action Required:**
-            - Merge to Accept.
-            - Close to Decline.
-          branch: water-data-patch
+            New data fetched for rivers/lakes and landslides.
+            **Action:** Merge to accept, Close to decline.
+          branch: data-update-patch
           delete-branch: true
           base: main
           add-paths: |
             data/water_data_full_combined.csv
+            data/landslide.csv
 
-      # 4. Append Link to File (UPDATED CONDITION)
+      # 5. Add Link to Email
       - name: Add Link to Email Body
-        # 👇 Change this line to run whenever a PR URL exists (Created OR Updated)
         if: steps.cpr.outputs.pull-request-url != ''
         run: |
-          echo "<br>" >> email_summary.html
-          echo "<h3>Validation Required</h3>" >> email_summary.html
+          echo "<br><hr>" >> email_summary.html
+          echo "<h3>⚠️ Validation Required</h3>" >> email_summary.html
           echo "<p>Review and Approve/Decline here: <a href='${{ steps.cpr.outputs.pull-request-url }}'>${{ steps.cpr.outputs.pull-request-url }}</a></p>" >> email_summary.html
 
-      # 5. Send Email (UPDATED CONDITION)
+      # 6. Send Email
       - name: Send Email Notification
-        # 👇 Change this line too
         if: steps.cpr.outputs.pull-request-url != ''
         uses: dawidd6/action-send-mail@v3
         with:
@@ -100,7 +121,7 @@ jobs:
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Water Data Action Required #${{ steps.cpr.outputs.pull-request-number }}"
-          to: spotlight.vnexpress@gmail.com
-          from: "Water Bot"
+          subject: "Data Action Required #${{ steps.cpr.outputs.pull-request-number }}"
+          to: spotlight.vnexpress@gmail.com,spotlight@vnexpress.com.vn
+          from: "Data Bot"
           html_body: file://email_summary.html
