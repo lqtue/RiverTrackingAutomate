@@ -25,7 +25,7 @@ TZ_LOCAL = tz.gettz("Asia/Ho_Chi_Minh")
 
 # Paths
 OUT_DIR = Path("data")
-OUT_DIR.mkdir(exist_ok=True)
+OUT_DIR.mkdir(exist_ok=True) # Creates 'data' folder if it doesn't exist
 OUT_CSV = OUT_DIR / "landslide.csv"
 
 # =========================
@@ -59,7 +59,6 @@ def post_with_retries(url, data, max_retries=3, timeout=30):
 
 def main():
     # 1. Get Current Time (Rounded to Hour)
-    # This sets minutes and seconds to 00:00 (e.g., 14:45 -> 14:00)
     now = datetime.now(TZ_LOCAL).replace(minute=0, second=0, microsecond=0)
     date_str = now.strftime("%Y-%m-%d %H:%M:%S")
     
@@ -85,7 +84,7 @@ def main():
                 for row in data:
                     prov = str(row.get("provinceName_2cap", "")).strip()
                     
-                    # Clean Commune Name (Remove 'P. ')
+                    # Clean Commune Name: Remove 'P. ' prefix if present
                     commune = str(row.get("commune_name_2cap", "")).strip()
                     if commune.startswith("P. "):
                         commune = commune[3:].strip()
@@ -102,6 +101,7 @@ def main():
             print(f"⚠️ Error parsing response: {e}")
 
     # 3. Process Data
+    # Ensure DataFrame is created even if no records found (creates empty file with headers)
     if not records:
         print("✅ No active warnings found (or API returned empty).")
         df_new = pd.DataFrame(columns=["time", "commune_id_2cap", "commune_name_2cap", "provinceName_2cap", "nguycosatlo", "nguycoluquet"])
@@ -119,6 +119,7 @@ def main():
         ).drop(columns=["_sev"], errors="ignore")
 
     # 4. Save (Overwrite Mode)
+    # .to_csv() automatically creates the file if it doesn't exist
     df_new.sort_values(["provinceName_2cap", "commune_name_2cap"]).to_csv(OUT_CSV, index=False, encoding="utf-8-sig")
     print(f"✅ Data refreshed in {OUT_CSV}")
 
