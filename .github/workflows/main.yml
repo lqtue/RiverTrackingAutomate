@@ -34,27 +34,30 @@ jobs:
       - name: Run Water Tracker
         run: python water_export_cli.py
 
-      # 2. Run Landslide Tracker (NEW)
+      # 2. Run Landslide Tracker
       - name: Run Landslide Tracker
         run: python landslide_export_cli.py
 
-      # 3. Generate HTML Summary (UPDATED for both)
+      # 3. Generate HTML Summary
       - name: Generate HTML Summary
         id: summary
         run: |
           HTML_FILE="email_summary.html"
-          HAS_CHANGES="false"
-          
+          HAS_CHANGES="false"          
           echo "<h3>🌊⛰️ Data Update Report</h3>" > $HTML_FILE
           
           # --- CHECK WATER DATA ---
+          if [ -f data/water_data_full_combined.csv ]; then
+             # Intent-to-add ensures diff picks it up even if it's a new file
+             git add -N data/water_data_full_combined.csv || true
+          fi
+          
           if git diff --quiet data/water_data_full_combined.csv; then
              echo "<p>No new water data.</p>" >> $HTML_FILE
           else
              echo "<h4>💧 Water Levels</h4>" >> $HTML_FILE
              echo "<table border='1' cellpadding='3' cellspacing='0' width='100%'>" >> $HTML_FILE
              echo "<tr style='background:#f0f0f0'><th>Station</th><th>Time</th><th>Level</th><th>Alert</th></tr>" >> $HTML_FILE
-             # Extract specific columns: Name(3), Time(6), Level(7), Alert(8)
              git diff -U0 data/water_data_full_combined.csv \
                | grep "^+[^+]" | sed 's/^+//' \
                | cut -d, -f3,6,7,8 \
@@ -65,16 +68,17 @@ jobs:
           fi
 
           # --- CHECK LANDSLIDE DATA ---
-          # If file doesn't exist yet, don't diff
-          if [ ! -f data/landslide.csv ]; then
-             echo "<p>Landslide data initializing...</p>" >> $HTML_FILE
-          elif git diff --quiet data/landslide.csv; then
+          if [ -f data/landslide.csv ]; then
+             # Intent-to-add ensures diff picks it up even if it's a new file
+             git add -N data/landslide.csv || true
+          fi
+
+          if git diff --quiet data/landslide.csv; then
              echo "<p>No new landslide warnings.</p>" >> $HTML_FILE
           else
              echo "<h4>⛰️ Landslide Warnings</h4>" >> $HTML_FILE
              echo "<table border='1' cellpadding='3' cellspacing='0' width='100%'>" >> $HTML_FILE
              echo "<tr style='background:#f0f0f0'><th>Time</th><th>Province</th><th>Commune</th><th>Risk</th></tr>" >> $HTML_FILE
-             # CSV Cols: time(1), id, commune(3), province(4), satlo(5), luquet
              git diff -U0 data/landslide.csv \
                | grep "^+[^+]" | sed 's/^+//' \
                | awk -F, '{print "<tr><td>" $1 "</td><td>" $4 "</td><td>" $3 "</td><td>" $5 "</td></tr>"}' \
@@ -85,7 +89,7 @@ jobs:
 
           echo "HAS_CHANGES=$HAS_CHANGES" >> $GITHUB_OUTPUT
 
-      # 4. Create Pull Request (Includes both files)
+      # 4. Create Pull Request
       - name: Create Pull Request
         if: steps.summary.outputs.HAS_CHANGES == 'true'
         id: cpr
