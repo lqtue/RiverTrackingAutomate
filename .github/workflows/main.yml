@@ -30,23 +30,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 1. Run your existing script (No changes needed to the file)
+      # 1. Run your existing script
       - name: Run water export script
         run: |
           python water_export_cli.py
 
-      # 2. Detect changes and build HTML Table (The "Magic" Step)
+      # 2. Detect changes and build HTML Table
       - name: Generate HTML Summary
         id: summary
         run: |
-          # Define the output file
           HTML_FILE="email_summary.html"
-          
-          # Check if the CSV has changes using git diff
-          # -U0: Zero context lines (just the changes)
-          # grep "^+[^+]": Get only lines starting with single +, ignore header +++
-          # cut: Select specific columns (3=Name, 4=Basin, 5=Province, 6=Time, 7=Level, 8=Alert)
-          # awk: Wrap in HTML tags
           
           echo "<h3>🌊 New Data Detected</h3>" > $HTML_FILE
           echo "<table border='1' cellpadding='5' cellspacing='0'>" >> $HTML_FILE
@@ -56,6 +49,7 @@ jobs:
             echo "<tr><td colspan='6'>No new data fetched in this run.</td></tr>" >> $HTML_FILE
             echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
           else
+            # Get the diff, strip the '+', and wrap columns in table tags
             git diff -U0 data/water_data_full_combined.csv \
               | grep "^+[^+]" \
               | sed 's/^+//' \
@@ -67,7 +61,7 @@ jobs:
           
           echo "</table>" >> $HTML_FILE
 
-      # 3. Create Pull Request (Only if data changed)
+      # 3. Create Pull Request
       - name: Create Pull Request
         if: steps.summary.outputs.HAS_CHANGES == 'true'
         id: cpr
@@ -84,11 +78,20 @@ jobs:
           branch: water-data-patch
           delete-branch: true
           base: main
-          # Only commit the CSV, ignore the temp HTML file
           add-paths: |
             data/water_data_full_combined.csv
 
-      # 4. Send Email with the Table
+      # 4. Append Link to File (NEW STEP)
+      # We add the link to the HTML file NOW, because we have the PR URL
+      - name: Add Link to Email Body
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        run: |
+          echo "<br>" >> email_summary.html
+          echo "<h3>Validation Required</h3>" >> email_summary.html
+          echo "<p>Review and Approve/Decline here: <a href='${{ steps.cpr.outputs.pull-request-url }}'>${{ steps.cpr.outputs.pull-request-url }}</a></p>" >> email_summary.html
+
+      # 5. Send Email (UPDATED)
+      # Now we only point to the file, which contains everything
       - name: Send Email Notification
         if: steps.cpr.outputs.pull-request-operation == 'created'
         uses: dawidd6/action-send-mail@v3
@@ -98,10 +101,6 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "Water Data Action Required #${{ steps.cpr.outputs.pull-request-number }}"
-          to: spotlight.vnexpress@gmail.com  # <--- PUT YOUR EMAIL HERE
+          to: your_email@example.com
           from: "Water Bot"
-          html_body: |
-            file://email_summary.html
-            <br>
-            <h3>Validation Required</h3>
-            <p>Review and Approve/Decline here: <a href="${{ steps.cpr.outputs.pull-request-url }}">${{ steps.cpr.outputs.pull-request-url }}</a></p>
+          html_body: file://email_summary.html
