@@ -81,19 +81,19 @@ jobs:
           add-paths: |
             data/water_data_full_combined.csv
 
-      # 4. Append Link to File (NEW STEP)
-      # We add the link to the HTML file NOW, because we have the PR URL
+      # 4. Append Link to File (UPDATED CONDITION)
       - name: Add Link to Email Body
-        if: steps.cpr.outputs.pull-request-operation == 'created'
+        # 👇 Change this line to run whenever a PR URL exists (Created OR Updated)
+        if: steps.cpr.outputs.pull-request-url != ''
         run: |
           echo "<br>" >> email_summary.html
           echo "<h3>Validation Required</h3>" >> email_summary.html
           echo "<p>Review and Approve/Decline here: <a href='${{ steps.cpr.outputs.pull-request-url }}'>${{ steps.cpr.outputs.pull-request-url }}</a></p>" >> email_summary.html
 
-      # 5. Send Email (UPDATED)
-      # Now we only point to the file, which contains everything
+      # 5. Send Email (UPDATED CONDITION)
       - name: Send Email Notification
-        if: steps.cpr.outputs.pull-request-operation == 'created'
+        # 👇 Change this line too
+        if: steps.cpr.outputs.pull-request-url != ''
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -101,6 +101,6 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "Water Data Action Required #${{ steps.cpr.outputs.pull-request-number }}"
-          to: your_email@example.com
+          to: spotlight.vnexpress@gmail.com
           from: "Water Bot"
           html_body: file://email_summary.html
