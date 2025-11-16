@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write  # Required to create PRs
+      pull-requests: write
 
     steps:
       - name: Checkout repo
@@ -30,12 +30,46 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 1. Run your existing script (No changes needed to the file)
       - name: Run water export script
         run: |
           python water_export_cli.py
 
-      # --- NEW NODE: Create "Allow/Decline" Mechanism (Pull Request) ---
+      # 2. Detect changes and build HTML Table (The "Magic" Step)
+      - name: Generate HTML Summary
+        id: summary
+        run: |
+          # Define the output file
+          HTML_FILE="email_summary.html"
+          
+          # Check if the CSV has changes using git diff
+          # -U0: Zero context lines (just the changes)
+          # grep "^+[^+]": Get only lines starting with single +, ignore header +++
+          # cut: Select specific columns (3=Name, 4=Basin, 5=Province, 6=Time, 7=Level, 8=Alert)
+          # awk: Wrap in HTML tags
+          
+          echo "<h3>🌊 New Data Detected</h3>" > $HTML_FILE
+          echo "<table border='1' cellpadding='5' cellspacing='0'>" >> $HTML_FILE
+          echo "<tr><th>Station</th><th>Basin</th><th>Province</th><th>Time (UTC)</th><th>Level (m)</th><th>Alert</th></tr>" >> $HTML_FILE
+          
+          if git diff --quiet data/water_data_full_combined.csv; then
+            echo "<tr><td colspan='6'>No new data fetched in this run.</td></tr>" >> $HTML_FILE
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+          else
+            git diff -U0 data/water_data_full_combined.csv \
+              | grep "^+[^+]" \
+              | sed 's/^+//' \
+              | cut -d, -f3,4,5,6,7,8 \
+              | awk -F, '{print "<tr><td>" $1 "</td><td>" $2 "</td><td>" $3 "</td><td>" $4 "</td><td>" $5 "</td><td>" $6 "</td></tr>"}' \
+              >> $HTML_FILE
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "</table>" >> $HTML_FILE
+
+      # 3. Create Pull Request (Only if data changed)
       - name: Create Pull Request
+        if: steps.summary.outputs.HAS_CHANGES == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
@@ -44,25 +78,30 @@ jobs:
           title: "🌊 Water Data Update: ${{ steps.date.outputs.date }}"
           body: |
             New water data has been fetched.
-            - **Allow:** Merge this Pull Request.
-            - **Decline:** Close this Pull Request.
-          branch: water-data-update-patch
+            **Action Required:**
+            - Merge to Accept.
+            - Close to Decline.
+          branch: water-data-patch
           delete-branch: true
           base: main
+          # Only commit the CSV, ignore the temp HTML file
+          add-paths: |
+            data/water_data_full_combined.csv
 
-      # --- NEW NODE: Send Notification Email ---
+      # 4. Send Email with the Table
       - name: Send Email Notification
         if: steps.cpr.outputs.pull-request-operation == 'created'
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.gmail.com  # Or your email provider's SMTP
+          server_address: smtp.gmail.com
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Water Data Action Required"
-          to: spotlight.vnexpress@gmail.com 
+          subject: "Water Data Action Required #${{ steps.cpr.outputs.pull-request-number }}"
+          to: spotlight.vnexpress@gmail.com  # <--- PUT YOUR EMAIL HERE
           from: "Water Bot"
-          body: |
-            New data is ready for review.
-            
-            Review and Approve/Decline here: ${{ steps.cpr.outputs.pull-request-url }}
+          html_body: |
+            file://email_summary.html
+            <br>
+            <h3>Validation Required</h3>
+            <p>Review and Approve/Decline here: <a href="${{ steps.cpr.outputs.pull-request-url }}">${{ steps.cpr.outputs.pull-request-url }}</a></p>
